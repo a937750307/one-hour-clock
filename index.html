@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>整点自动播放声音</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+
+        .time-display {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #3498db;
+        }
+
+        .audio-info {
+            margin: 20px 0;
+        }
+
+        .audio-info p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .hint {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+
+        /* 备案信息样式 */
+       /* 备案信息样式 */
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .footer span {
+            display: inline-block;
+            margin: 0 10px; /* 每个段落之间添加间距 */
+        }
+
+        .footer a {
+            color: black;
+            text-decoration: none;
+        }
+
+        .footer .red-text {
+            color: red;
+        }
+
+        .footer .gongan-icon {
+            vertical-align: middle;
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .footer {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+         .footer span {
+            margin: 5px 0; /* 手机端上下间距 */
+             }
+        }
+
+
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .footer span {
+            display: inline-block;
+        }
+
+        .footer a {
+            color: black;
+            text-decoration: none;
+        }
+
+        .footer .red-text {
+            color: red;
+        }
+
+        .footer .gongan-icon {
+            vertical-align: middle;
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .footer {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>整点自动播放声音</h1>
+        <div class="time-display">
+            当前时间: <span id="current-time">加载中...</span>
+        </div>
+        <div class="audio-info">
+            <p>当前音频: <span id="audio-text">加载中...</span></p>
+        </div>
+        <button id="play-button">手动播放</button>
+        <div class="hint">
+            提示：首次使用请先点击“手动播放”按钮，以允许后续自动播放功能正常工作。
+        </div>
+    </div>
+
+    <!-- 备案信息 -->
+    <div class="footer">
+    <span class="red-text">本站内容仅供学习和交流，非商业用途</span>
+    <a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备2025187466号</a>
+    <span>
+        <img src="https://www.937788.xyz/gonganbeian.png" alt="公安备案" class="gongan-icon">
+        <a href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=33030402001483" target="_blank">浙公网安备33030402001483号</a>
+    </span>
+</div>
+
+
+    <script>
+        let userInteracted = false;
+        let isManualPlayed = false;
+
+        // 用户交互事件监听
+        document.addEventListener('click', function() {
+            userInteracted = true;
+        });
+
+        // 获取当前时间并更新显示
+        function updateCurrentTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        // 检查是否是整点
+        function checkOnTheHour() {
+            const now = new Date();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+
+            if (minutes === 0 && seconds === 0 && userInteracted) {
+                if (isManualPlayed) {
+                    speakAtHour(now.getHours());
+                } else {
+                    // 如果未手动播放过，不自动播放
+                    console.log("请先点击“手动播放”");
+                }
+            }
+        }
+
+        // 文字转语音（当前时间）
+        function speakAtCurrentTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+
+            const text = `当前时间 ${hours} 点 ${minutes} 分`;
+            document.getElementById('audio-text').textContent = text;
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN'; // 设置语言为中文
+            utterance.rate = 1;       // 语速
+            utterance.pitch = 1;      // 音高
+            utterance.volume = 1;     // 音量
+
+            speechSynthesis.speak(utterance);
+        }
+
+        // 文字转语音（整点）
+        function speakAtHour(hour) {
+            const text = `当前时间 ${hour} 点整 `;
+            document.getElementById('audio-text').textContent = text;
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+
+            speechSynthesis.speak(utterance);
+        }
+
+        // 页面加载后立即预加载音频（但不自动播放）
+        window.addEventListener('load', () => {
+            updateCurrentTime(); // 初始化时间
+        });
+
+        // 初始化
+        function init() {
+            // 更新时间显示
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+
+            // 手动播放按钮
+            document.getElementById('play-button').addEventListener('click', () => {
+                speakAtCurrentTime();
+                isManualPlayed = true; // 标记已手动播放
+            });
+
+            // 检查是否整点
+            checkOnTheHour();
+            setInterval(checkOnTheHour, 1000);
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
