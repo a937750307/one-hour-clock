@@ -36,3 +36,6 @@
 ## 免责声明
 
 本项目仅用于学习和交流，不涉及任何商业用途。请遵守相关法律法规。
+
+<img width="722" height="747" alt="image" src="https://github.com/user-attachments/assets/7580ac79-8c52-4664-aa12-d9d641a6016f" />
+
