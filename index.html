@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>整点自动播放声音</title>
+    <title>准时语音播报</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -11,10 +11,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             background-color: #f5f5f5;
             color: #333;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .container {
@@ -23,13 +25,13 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             padding: 30px;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
             text-align: center;
         }
 
         h1 {
             font-size: 28px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             color: #2c3e50;
         }
 
@@ -49,7 +51,85 @@
             margin-bottom: 10px;
         }
 
-        button {
+        /* 间隔配置区域样式 */
+        .config-section {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .config-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .interval-btn {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .interval-btn.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .interval-btn:hover:not(.active) {
+            background-color: #bbdefb;
+        }
+
+        .custom-interval {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .custom-interval input {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 120px;
+        }
+
+        .custom-interval button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .current-interval {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+            text-align: center;
+        }
+
+        button#play-button {
             background-color: #3498db;
             color: white;
             border: none;
@@ -58,20 +138,36 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-top: 10px;
         }
 
-        button:hover {
+        button#play-button:hover {
             background-color: #2980b9;
         }
 
         .hint {
+            margin-top: 25px;
             font-size: 14px;
             color: #7f8c8d;
-            margin-top: 20px;
+            text-align: left;
+        }
+
+        .hint p {
+            margin: 0 0 8px 0;
+            font-weight: bold;
+        }
+
+        .hint ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .hint li {
+            margin-bottom: 4px;
+            line-height: 1.5;
         }
 
         /* 备案信息样式 */
-       /* 备案信息样式 */
         .footer {
             margin-top: 30px;
             font-size: 14px;
@@ -80,7 +176,7 @@
 
         .footer span {
             display: inline-block;
-            margin: 0 10px; /* 每个段落之间添加间距 */
+            margin: 0 10px;
         }
 
         .footer a {
@@ -107,84 +203,71 @@
                 align-items: center;
             }
 
-         .footer span {
-            margin: 5px 0; /* 手机端上下间距 */
-             }
-        }
-
-
-        .footer {
-            margin-top: 30px;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        .footer span {
-            display: inline-block;
-        }
-
-        .footer a {
-            color: black;
-            text-decoration: none;
-        }
-
-        .footer .red-text {
-            color: red;
-        }
-
-        .footer .gongan-icon {
-            vertical-align: middle;
-            width: 16px;
-            height: 16px;
-            margin-right: 5px;
-        }
-
-        /* 移动端适配 */
-        @media (max-width: 768px) {
-            .footer {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
+            .footer span {
+                margin: 5px 0;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>整点自动播放声音</h1>
+        <h1>准时语音播报</h1>
         <div class="time-display">
             当前时间: <span id="current-time">加载中...</span>
         </div>
         <div class="audio-info">
-            <p>当前音频: <span id="audio-text">加载中...</span></p>
+            <p>当前播报内容: <span id="audio-text">等待激活...</span></p>
         </div>
-        <button id="play-button">手动播放</button>
+        
+        <!-- 间隔配置模块 -->
+        <div class="config-section">
+            <h3>播报间隔设置</h3>
+            <div class="preset-buttons">
+                <button class="interval-btn active" data-interval="hour">整点</button>
+                <button class="interval-btn" data-interval="30">30分钟</button>
+                <button class="interval-btn" data-interval="10">10分钟</button>
+                <button class="interval-btn" data-interval="5">5分钟</button>
+                <button class="interval-btn" data-interval="1">1分钟</button>
+            </div>
+            <div class="custom-interval">
+                <label>自定义间隔(秒):</label>
+                <input type="number" id="custom-interval-input" min="1" placeholder="输入正整数秒数">
+                <button id="custom-submit">应用自定义</button>
+            </div>
+            <p class="current-interval">当前间隔: <span id="current-interval-text">整点</span></p>
+        </div>
+
+        <button id="play-button">手动激活播放权限</button>
+        
+        <!-- 提示说明 -->
         <div class="hint">
-            提示：首次使用请先点击“手动播放”按钮，以允许后续自动播放功能正常工作。</br>仅支持电脑端浏览器，手机端存在系统性限制。
+            <p>⚠️ 重要提示：</p>
+            <ul>
+                <li>首次使用请先点击「手动激活播放权限」按钮，以解锁浏览器自动播放权限</li>
+                <li>请保持此标签页打开且处于可见状态，浏览器后台运行或窗口最小化后可能暂停播报</li>
+                <li>仅电脑端浏览器可语音播报，手机端存在系统性限制无法播报</li>
+            </ul>
         </div>
     </div>
 
     <!-- 备案信息 -->
     <div class="footer">
-    <span class="red-text">本站内容仅供学习和交流，非商业用途</span>
-    <a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备2025187466号</a>
-    <span>
-        <img src="https://www.937788.xyz/gonganbeian.png" alt="公安备案" class="gongan-icon">
-        <a href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=33030402001483" target="_blank">浙公网安备33030402001483号</a>
-    </span>
-</div>
-
+        <span class="red-text">本站内容仅供学习和交流，非商业用途</span>
+        <a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备2025187466号</a>
+        <span>
+            <img src="https://www.937788.xyz/gonganbeian.png" alt="公安备案" class="gongan-icon">
+            <a href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=33030402001483" target="_blank">浙公网安备33030402001483号</a>
+        </span>
+    </div>
 
     <script>
         let userInteracted = false;
         let isManualPlayed = false;
+        let currentInterval = 'hour'; // 默认整点播报
+        let customInterval = null; // 自定义间隔，单位秒
+        let lastPlayTime = 0; // 上次播报的时间戳
 
-        // 用户交互事件监听
-        document.addEventListener('click', function() {
-            userInteracted = true;
-        });
-
-        // 获取当前时间并更新显示
+        // 更新当前时间显示
         function updateCurrentTime() {
             const now = new Date();
             const hours = now.getHours().toString().padStart(2, '0');
@@ -193,77 +276,138 @@
             document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds}`;
         }
 
-        // 检查是否是整点
-        function checkOnTheHour() {
-            const now = new Date();
-            const minutes = now.getMinutes();
-            const seconds = now.getSeconds();
-
-            if (minutes === 0 && seconds === 0 && userInteracted) {
-                if (isManualPlayed) {
-                    speakAtHour(now.getHours());
-                } else {
-                    // 如果未手动播放过，不自动播放
-                    console.log("请先点击“手动播放”");
-                }
+        // 获取当前间隔对应的毫秒数
+        function getCurrentIntervalMs() {
+            if (currentInterval === 'custom' && customInterval) {
+                return customInterval * 1000;
+            }
+            switch(currentInterval) {
+                case 'hour': return 3600 * 1000;
+                case '30': return 30 * 60 * 1000;
+                case '10': return 10 * 60 * 1000;
+                case '5': return 5 * 60 * 1000;
+                case '1': return 60 * 1000;
+                default: return 3600 * 1000;
             }
         }
 
-        // 文字转语音（当前时间）
+        // 判断是否到达播报时间
+        function shouldPlayNow() {
+            const now = Date.now();
+            // 距离上次播报时间不足间隔，直接跳过
+            if (now - lastPlayTime < getCurrentIntervalMs()) {
+                return false;
+            }
+            const date = new Date();
+            const minutes = date.getMinutes();
+            const seconds = date.getSeconds();
+
+            switch(currentInterval) {
+                case 'hour': // 整点：分钟0，秒0
+                    return minutes === 0 && seconds === 0;
+                case '30': // 半点/整点：分钟0或30，秒0
+                    return (minutes === 0 || minutes === 30) && seconds === 0;
+                case '10': // 每10分钟：分钟为0/10/20/30/40/50，秒0
+                    return minutes % 10 === 0 && seconds === 0;
+                case '5': // 每5分钟：分钟%5===0，秒0
+                    return minutes % 5 === 0 && seconds === 0;
+                case '1': // 每1分钟：秒0
+                    return seconds === 0;
+                case 'custom': // 自定义间隔仅通过时间差判断
+                    return true;
+                default:
+                    return minutes === 0 && seconds === 0;
+            }
+        }
+
+        // 执行语音播报
         function speakAtCurrentTime() {
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
+            try {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const text = `当前时间 ${hours} 点 ${minutes} 分`;
+                document.getElementById('audio-text').textContent = text;
 
-            const text = `当前时间 ${hours} 点 ${minutes} 分`;
-            document.getElementById('audio-text').textContent = text;
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'zh-CN'; // 设置语言为中文
-            utterance.rate = 1;       // 语速
-            utterance.pitch = 1;      // 音高
-            utterance.volume = 1;     // 音量
-
-            speechSynthesis.speak(utterance);
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN'; // 设置中文语音
+                utterance.rate = 1;       // 语速
+                utterance.pitch = 1;      // 音高
+                utterance.volume = 1;     // 音量
+                utterance.onerror = (err) => console.warn('语音播放失败:', err.message);
+                speechSynthesis.speak(utterance);
+            } catch (err) {
+                console.warn('操作异常:', err.message);
+            }
         }
 
-        // 文字转语音（整点）
-        function speakAtHour(hour) {
-            const text = `当前时间 ${hour} 点整 `;
-            document.getElementById('audio-text').textContent = text;
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'zh-CN';
-            utterance.rate = 1;
-            utterance.pitch = 1;
-            utterance.volume = 1;
-
-            speechSynthesis.speak(utterance);
+        // 检查并触发播报
+        function checkAndPlay() {
+            if (!userInteracted || !isManualPlayed) {
+                return;
+            }
+            // 非自定义间隔需要校验时间点
+            if (currentInterval !== 'custom' && !shouldPlayNow()) {
+                return;
+            }
+            speakAtCurrentTime();
+            lastPlayTime = Date.now();
         }
 
-        // 页面加载后立即预加载音频（但不自动播放）
-        window.addEventListener('load', () => {
-            updateCurrentTime(); // 初始化时间
-        });
-
-        // 初始化
+        // 页面初始化
         function init() {
-            // 更新时间显示
-            updateCurrentTime();
-            setInterval(updateCurrentTime, 1000);
-
-            // 手动播放按钮
+            // 手动激活按钮事件
             document.getElementById('play-button').addEventListener('click', () => {
                 speakAtCurrentTime();
-                isManualPlayed = true; // 标记已手动播放
+                isManualPlayed = true;
+                userInteracted = true;
+                document.getElementById('play-button').textContent = "已激活权限";
+                document.getElementById('play-button').disabled = true;
             });
 
-            // 检查是否整点
-            checkOnTheHour();
-            setInterval(checkOnTheHour, 1000);
+            // 预设间隔按钮绑定
+            document.querySelectorAll('.interval-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 移除所有激活样式
+                    document.querySelectorAll('.interval-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    const interval = btn.dataset.interval;
+                    currentInterval = interval;
+                    customInterval = null;
+                    let intervalText = interval === 'hour' ? '整点' : `${interval}分钟`;
+                    document.getElementById('current-interval-text').textContent = intervalText;
+                    document.getElementById('custom-interval-input').value = '';
+                });
+            });
+
+            // 自定义间隔提交绑定
+            document.getElementById('custom-submit').addEventListener('click', () => {
+                const inputVal = document.getElementById('custom-interval-input').value.trim();
+                const seconds = parseInt(inputVal);
+                if (!isNaN(seconds) && seconds > 0) {
+                    // 移除所有激活样式
+                    document.querySelectorAll('.interval-btn').forEach(b => b.classList.remove('active'));
+                    currentInterval = 'custom';
+                    customInterval = seconds;
+                    document.getElementById('current-interval-text').textContent = `自定义${seconds}秒`;
+                    document.getElementById('custom-interval-input').value = '';
+                } else {
+                    alert("请输入有效的正整数秒数！");
+                }
+            });
+
+            // 使用递归动态延迟定时器，避免浏览器后台节流
+            function runTimedTasks() {
+                updateCurrentTime();
+                checkAndPlay();
+                // 计算精确的下一次执行时间，保证每秒触发一次
+                const nextTick = 1000 - (Date.now() % 1000);
+                setTimeout(runTimedTasks, nextTick);
+            }
+            runTimedTasks();
         }
 
-        // 页面加载完成后初始化
         window.addEventListener('load', init);
     </script>
 </body>
