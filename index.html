@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>准时语音播报</title>
     <style>
+        /* ===== 页面主样式 ===== */
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Arial', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -16,399 +21,756 @@
             background-color: #f5f5f5;
             color: #333;
             padding: 20px;
-            box-sizing: border-box;
         }
 
         .container {
             background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+            padding: 30px 28px;
             width: 90%;
-            max-width: 600px;
+            max-width: 620px;
             text-align: center;
+            position: relative;
+            z-index: 2;
         }
 
         h1 {
             font-size: 28px;
-            margin-bottom: 20px;
-            color: #2c3e50;
+            margin: 0 0 6px 0;
+            color: #1a2a3a;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #8a9aa8;
+            margin: 0 0 18px 0;
         }
 
         .time-display {
-            font-size: 36px;
-            font-weight: bold;
-            margin: 20px 0;
-            color: #3498db;
+            font-size: 40px;
+            font-weight: 700;
+            margin: 16px 0;
+            color: #1976d2;
+            background: #f0f7ff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
         }
 
         .audio-info {
-            margin: 20px 0;
+            margin: 16px 0;
+            background: #fafbfc;
+            padding: 10px 14px;
+            border-radius: 6px;
+            border-left: 3px solid #1976d2;
         }
-
         .audio-info p {
-            font-size: 16px;
-            margin-bottom: 10px;
+            font-size: 15px;
+            margin: 4px 0;
+        }
+        .audio-info #audio-text {
+            font-weight: 600;
+            color: #0d47a1;
         }
 
-        /* 间隔配置区域样式 */
+        /* ===== 间隔配置 ===== */
         .config-section {
-            margin: 25px 0;
-            padding: 20px;
+            margin: 20px 0 14px 0;
+            padding: 18px 16px 14px;
             background-color: #f8f9fa;
             border-radius: 8px;
             text-align: left;
         }
-
         .config-section h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #2c3e50;
-            font-size: 18px;
+            margin: 0 0 12px 0;
+            color: #1a2a3a;
+            font-size: 17px;
+            font-weight: 600;
         }
-
         .preset-buttons {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
+            gap: 6px;
+            margin-bottom: 12px;
             justify-content: center;
         }
-
         .interval-btn {
             background-color: #e3f2fd;
-            color: #1976d2;
+            color: #1565c0;
             border: 1px solid #bbdefb;
-            padding: 8px 12px;
+            padding: 7px 14px;
             font-size: 14px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
+            font-weight: 500;
         }
-
         .interval-btn.active {
-            background-color: #3498db;
+            background-color: #1565c0;
             color: white;
-            border-color: #3498db;
+            border-color: #1565c0;
+            box-shadow: 0 2px 6px rgba(21, 101, 192, 0.25);
         }
-
         .interval-btn:hover:not(.active) {
             background-color: #bbdefb;
+            transform: translateY(-1px);
         }
 
         .custom-interval {
-            margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
+            margin-bottom: 6px;
         }
-
+        .custom-interval label {
+            font-size: 14px;
+            color: #444;
+        }
         .custom-interval input {
             padding: 6px 8px;
-            border: 1px solid #ddd;
+            border: 1px solid #ccc;
             border-radius: 4px;
-            width: 120px;
+            width: 100px;
+            font-size: 14px;
+            text-align: center;
         }
-
         .custom-interval button {
-            background-color: #3498db;
+            background-color: #1565c0;
             color: white;
             border: none;
-            padding: 6px 12px;
+            padding: 6px 14px;
             font-size: 14px;
             border-radius: 4px;
             cursor: pointer;
+            transition: background 0.2s;
         }
-
+        .custom-interval button:hover {
+            background-color: #0d47a1;
+        }
         .current-interval {
             font-size: 14px;
             color: #666;
-            margin: 0;
+            margin: 6px 0 0 0;
             text-align: center;
         }
+        .current-interval span {
+            font-weight: 600;
+            color: #1a2a3a;
+        }
 
+        /* ===== 主按钮 ===== */
         button#play-button {
-            background-color: #3498db;
+            background-color: #1976d2;
             color: white;
             border: none;
-            padding: 12px 25px;
-            font-size: 16px;
-            border-radius: 5px;
+            padding: 13px 30px;
+            font-size: 17px;
+            font-weight: 600;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s;
-            margin-top: 10px;
+            transition: background 0.25s, transform 0.15s;
+            margin: 8px 0 4px 0;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
         }
-
         button#play-button:hover {
-            background-color: #2980b9;
+            background-color: #0d47a1;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(25, 118, 210, 0.35);
+        }
+        button#play-button:disabled {
+            background-color: #7bb3e0;
+            cursor: default;
+            transform: none;
+            box-shadow: none;
         }
 
+        /* ===== 提示 ===== */
         .hint {
-            margin-top: 25px;
-            font-size: 14px;
-            color: #7f8c8d;
+            margin-top: 22px;
+            font-size: 13px;
+            color: #6a7a88;
             text-align: left;
+            background: #f8f9fa;
+            padding: 14px 18px;
+            border-radius: 6px;
         }
-
         .hint p {
             margin: 0 0 8px 0;
-            font-weight: bold;
+            font-weight: 600;
+            color: #c0392b;
         }
-
         .hint ul {
             margin: 0;
             padding-left: 20px;
         }
-
         .hint li {
             margin-bottom: 4px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
-        /* 备案信息样式 */
+        /* ===== 保活状态指示（极小，不干扰） ===== */
+        .keepalive-indicator {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #9aaab8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .keepalive-indicator .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #4caf50;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+        }
+
+        /* ===== 备案 ===== */
         .footer {
-            margin-top: 30px;
-            font-size: 14px;
+            margin-top: 24px;
+            font-size: 13px;
             text-align: center;
+            color: #6a7a88;
+            z-index: 2;
+            position: relative;
         }
-
         .footer span {
             display: inline-block;
-            margin: 0 10px;
+            margin: 0 8px;
         }
-
         .footer a {
-            color: black;
+            color: #000000;
             text-decoration: none;
         }
-
-        .footer .red-text {
-            color: red;
+        .footer a:hover {
+            text-decoration: underline;
         }
-
+        .footer .red-text {
+            color: #ff0000;
+        }
         .footer .gongan-icon {
             vertical-align: middle;
             width: 16px;
             height: 16px;
-            margin-right: 5px;
+            margin-right: 4px;
         }
 
-        /* 移动端适配 */
         @media (max-width: 768px) {
+            .container {
+                padding: 20px 14px;
+            }
+            .time-display {
+                font-size: 28px;
+                padding: 8px 10px;
+            }
             .footer {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                gap: 4px;
             }
-
             .footer span {
-                margin: 5px 0;
+                margin: 2px 0;
             }
         }
     </style>
 </head>
 <body>
+
+    <!-- ===== 主界面 ===== -->
     <div class="container">
-        <h1>准时语音播报</h1>
+        <h1> 准时语音播报</h1>
+
         <div class="time-display">
-            当前时间: <span id="current-time">加载中...</span>
-        </div>
-        <div class="audio-info">
-            <p>当前播报内容: <span id="audio-text">等待激活...</span></p>
-        </div>
-        
-        <!-- 间隔配置模块 -->
-        <div class="config-section">
-            <h3>播报间隔设置</h3>
-            <div class="preset-buttons">
-                <button class="interval-btn active" data-interval="hour">整点</button>
-                <button class="interval-btn" data-interval="30">30分钟</button>
-                <button class="interval-btn" data-interval="10">10分钟</button>
-                <button class="interval-btn" data-interval="5">5分钟</button>
-                <button class="interval-btn" data-interval="1">1分钟</button>
-            </div>
-            <div class="custom-interval">
-                <label>自定义间隔(秒):</label>
-                <input type="number" id="custom-interval-input" min="1" placeholder="输入正整数秒数">
-                <button id="custom-submit">应用自定义</button>
-            </div>
-            <p class="current-interval">当前间隔: <span id="current-interval-text">整点</span></p>
+            <span style="font-size:18px;color:#1565C0;margin-right:8px;">当前时间：</span><span id="current-time">加载中...</span>
         </div>
 
-        <button id="play-button">手动激活播放权限</button>
-        
-        <!-- 提示说明 -->
+        <div class="audio-info">
+            <p> 播报内容：<span id="audio-text">等待激活...</span></p>
+        </div>
+
+        <!-- 间隔配置 -->
+        <div class="config-section">
+            <h3> 播报间隔</h3>
+            <div class="preset-buttons">
+                <button class="interval-btn active" data-interval="hour">整点</button>
+                <button class="interval-btn" data-interval="30">30分</button>
+                <button class="interval-btn" data-interval="10">10分</button>
+                <button class="interval-btn" data-interval="5">5分</button>
+                <button class="interval-btn" data-interval="1">1分</button>
+            </div>
+            <div class="custom-interval">
+                <label>自定义（秒）：</label>
+                <input type="number" id="custom-interval-input" min="1" placeholder="正整数" />
+                <button id="custom-submit">应用</button>
+            </div>
+            <p class="current-interval">当前间隔：<span id="current-interval-text">整点</span></p>
+        </div>
+
+        <button id="play-button"> 手动激活播放权限</button>
+
         <div class="hint">
-            <p>⚠️ 重要提示：</p>
+            <p>️ 【重要提示】</p>
             <ul>
-                <li>首次使用请先点击「手动激活播放权限」按钮，以解锁浏览器自动播放权限</li>
-                <li>请保持此标签页打开且处于可见状态，浏览器后台运行或窗口最小化后可能暂停播报</li>
-                <li>仅电脑端浏览器可语音播报，手机端存在系统性限制无法播报</li>
+                <li>首次使用请点击上方按钮，解锁浏览器自动播放权限</li>
+                <li>请保持此页面 <b>在前台打开</b>，<b>或开启画中画</b>，以保证语音播报功能正常</li>
+                <li>仅桌面端浏览器可语音播报，手机端存在系统性限制</li>
             </ul>
+        </div>
+
+        <!-- 保活状态指示（纯视觉反馈，不影响保活本身） -->
+        <div class="keepalive-indicator">
+            <span class="dot"></span>
+            <span id="pip-status-text" style="color:#ff0000;font-weight:bold;">建议开启画中画</span>
+            <button id="pip-btn" style="margin-left:10px;padding:2px 10px;font-size:12px;border-radius:4px;border:1px solid #1976d2;background:#e3f2fd;color:#1976d2;cursor:pointer;">开启画中画</button>
         </div>
     </div>
 
-    <!-- 备案信息 -->
+    <!-- ===== 备案 ===== -->
     <div class="footer">
         <span class="red-text">本站内容仅供学习和交流，非商业用途</span>
         <a href="https://beian.miit.gov.cn/" target="_blank">浙ICP备2025187466号</a>
         <span>
-            <img src="https://www.937788.xyz/gonganbeian.png" alt="公安备案" class="gongan-icon">
+            <img src="https://www.937788.xyz/gonganbeian.png" alt="公安备案" class="gongan-icon" />
             <a href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=33030402001483" target="_blank">浙公网安备33030402001483号</a>
         </span>
     </div>
 
-    <script>
-        let userInteracted = false;
-        let isManualPlayed = false;
-        let currentInterval = 'hour'; // 默认整点播报
-        let customInterval = null; // 自定义间隔，单位秒
-        let lastPlayTime = 0; // 上次播报的时间戳
+    <!-- ================================================================ -->
+    <!-- ===== 保活视频：极小、透明、循环播放，不遮挡页面任何内容 ===== -->
+    <!-- ================================================================ -->
+    <div id="keepalive-wrapper" aria-hidden="true" style="
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 2px;
+    height: 2px;
+    overflow: hidden;
+    z-index: -9999;
+    opacity: 0.005;
+    pointer-events: none;
+    backface-visibility: hidden;
+    ">
+    <video id="keepalive-video"
+    width="2"
+    height="2"
+    muted
+    autoplay
+    loop
+    playsinline
+    preload="auto"
+    style="display: block; width: 2px; height: 2px; object-fit: cover;"
+    ></video>
+</div>
 
-        // 更新当前时间显示
-        function updateCurrentTime() {
-            const now = new Date();
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const seconds = now.getSeconds().toString().padStart(2, '0');
-            document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds}`;
+<!-- ===== 保活画布（离屏，不可见） ===== -->
+<canvas id="keepalive-canvas" width="2" height="2" style="display:none;"></canvas>
+
+<script>
+    // ================================================================
+    //  1. 保活引擎 — 循环空视频 + 小窗化
+    // ================================================================
+
+    (function() {
+        'use strict';
+
+        const video = document.getElementById('keepalive-video');
+        const canvas = document.getElementById('keepalive-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // ===== 画中画按钮逻辑 =====
+        const pipBtn = document.getElementById('pip-btn');
+        const pipStatusText = document.getElementById('pip-status-text');
+        if (window.PictureInPictureWindow && pipBtn) {
+            pipBtn.style.display = '';
+        }
+        function updatePipStatus(isPip) {
+            if (pipStatusText) {
+                pipStatusText.textContent = isPip ? '已开启画中画' : '建议开启画中画';
+                pipStatusText.style.color = isPip ? '#43a047' : '#ff0000';
+            }
+            if (pipBtn) {
+                pipBtn.textContent = isPip ? '退出画中画' : '开启画中画';
+            }
+        }
+        if (pipBtn) {
+            pipBtn.addEventListener('click', async function() {
+                try {
+                    if (document.pictureInPictureElement) {
+                        await document.exitPictureInPicture();
+                        updatePipStatus(false);
+                    } else {
+                        await video.requestPictureInPicture();
+                        updatePipStatus(true);
+                    }
+                } catch (e) {
+                    alert('画中画功能不可用或被浏览器限制');
+                }
+            });
+            // 画中画状态变化时同步按钮和提示
+            video.addEventListener('enterpictureinpicture', () => {
+                updatePipStatus(true);
+            });
+            video.addEventListener('leavepictureinpicture', () => {
+                updatePipStatus(false);
+            });
+        }
+        // 页面初始时同步一次
+        updatePipStatus(!!document.pictureInPictureElement);
+
+        let stream = null;
+        let keepaliveTimer = null;
+        let isPlaying = false;
+
+        // ---- 生成一帧“空”画面（极低消耗） ----
+        function drawEmptyFrame(tick) {
+            // 用极微弱的灰度变化保持视频流活跃，人眼不可见
+            const val = Math.floor((tick % 60) * 0.05);
+            ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
+            ctx.fillRect(0, 0, 2, 2);
         }
 
-        // 获取当前间隔对应的毫秒数
-        function getCurrentIntervalMs() {
+        // ---- 启动视频流 ----
+        function startKeepalive() {
+            if (isPlaying) return;
+
+            try {
+                // 1) 获取 canvas 视频流 (1 fps 足够)
+                stream = canvas.captureStream(1);
+
+                // 2) 绑定到 video
+                video.srcObject = stream;
+
+                // 3) 播放
+                const playPromise = video.play();
+                if (playPromise && typeof playPromise.then === 'function') {
+                    playPromise.then(() => {
+                        isPlaying = true;
+                        // console.log('[保活] 视频流已启动');
+                    }).catch((err) => {
+                        // 自动播放被阻止，等待用户交互后重试
+                        console.warn('[保活] 自动播放被阻止，等待用户激活:', err.message);
+                        // 标记为未播放，由外部交互触发
+                        isPlaying = false;
+                    });
+                } else {
+                    // 旧式浏览器
+                    isPlaying = true;
+                }
+
+                // 4) 定时刷新 canvas 内容（每秒1帧，保持流活跃）
+                let tick = 0;
+                if (keepaliveTimer) clearInterval(keepaliveTimer);
+                keepaliveTimer = setInterval(() => {
+                    drawEmptyFrame(tick);
+                    tick++;
+                    // 如果视频意外暂停，尝试恢复
+                    if (video.paused && isPlaying) {
+                        video.play().catch(() => {});
+                    }
+                }, 1000);
+
+                // 5) 初始绘制
+                drawEmptyFrame(0);
+
+            } catch (err) {
+                console.warn('[保活] canvas.captureStream 不支持:', err.message);
+                // fallback: 使用静音 AudioContext 保活（降级方案）
+                fallbackKeepalive();
+            }
+        }
+
+        // ---- 降级保活方案（AudioContext） ----
+        let audioCtx = null;
+
+        function fallbackKeepalive() {
+            try {
+                audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                // 创建一个极短的静音缓冲，循环播放
+                const buf = audioCtx.createBuffer(1, 1, 22050);
+                const data = buf.getChannelData(0);
+                data[0] = 0;
+                const src = audioCtx.createBufferSource();
+                src.buffer = buf;
+                src.loop = true;
+                src.connect(audioCtx.destination);
+                src.start();
+                // console.log('[保活] 降级使用 AudioContext');
+            } catch (e) {
+                console.warn('[保活] 所有保活方案均不可用:', e.message);
+            }
+        }
+
+        // ---- 用户交互后启动保活（如果尚未启动） ----
+        function activateKeepalive() {
+            if (!isPlaying && stream) {
+                video.play().then(() => {
+                    isPlaying = true;
+                }).catch(() => {});
+            } else if (!stream) {
+                startKeepalive();
+            }
+            // 如果降级方案中的 audioCtx 被 suspend，恢复
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(() => {});
+            }
+        }
+
+        // ---- 暴露激活函数给全局 ----
+        window.__keepaliveActivate = activateKeepalive;
+
+        // ---- 页面加载后尝试自动启动 ----
+        // 静音视频在大多数浏览器中可以自动播放
+        // 但为了保险，我们延迟一小段时间再尝试
+        setTimeout(() => {
+            startKeepalive();
+        }, 300);
+
+        // ---- 页面可见性变化时，如果视频暂停则恢复 ----
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && video.paused && isPlaying) {
+                video.play().catch(() => {});
+            }
+        });
+
+        // ---- 页面关闭前清理 ----
+        window.addEventListener('beforeunload', () => {
+            if (keepaliveTimer) clearInterval(keepaliveTimer);
+            if (stream) {
+                video.pause();
+                video.srcObject = null;
+                stream.getTracks().forEach(t => t.stop());
+            }
+            if (audioCtx) {
+                audioCtx.close().catch(() => {});
+            }
+        });
+
+        // console.log('[保活] 引擎已加载');
+    })();
+
+
+    // ================================================================
+    //  2. 语音播报逻辑（保持原功能，整合保活激活）
+    // ================================================================
+
+    (function() {
+        'use strict';
+
+        let userInteracted = false;
+        let isManualPlayed = false;
+        let currentInterval = 'hour';
+        let customInterval = null;
+        let lastPlayTime = 0;
+
+        // ---- DOM 引用 ----
+        const timeEl = document.getElementById('current-time');
+        const audioTextEl = document.getElementById('audio-text');
+        const playBtn = document.getElementById('play-button');
+        const intervalBtns = document.querySelectorAll('.interval-btn');
+        const customInput = document.getElementById('custom-interval-input');
+        const customSubmit = document.getElementById('custom-submit');
+        const intervalTextEl = document.getElementById('current-interval-text');
+
+        // ---- 更新时间显示 ----
+        function updateCurrentTime() {
+            const now = new Date();
+            const h = now.getHours().toString().padStart(2, '0');
+            const m = now.getMinutes().toString().padStart(2, '0');
+            const s = now.getSeconds().toString().padStart(2, '0');
+            timeEl.textContent = `${h}:${m}:${s}`;
+        }
+
+        // ---- 获取当前间隔（毫秒） ----
+        function getIntervalMs() {
             if (currentInterval === 'custom' && customInterval) {
                 return customInterval * 1000;
             }
-            switch(currentInterval) {
-                case 'hour': return 3600 * 1000;
-                case '30': return 30 * 60 * 1000;
-                case '10': return 10 * 60 * 1000;
-                case '5': return 5 * 60 * 1000;
-                case '1': return 60 * 1000;
-                default: return 3600 * 1000;
-            }
+            const map = {
+                'hour': 3600 * 1000,
+                '30': 30 * 60 * 1000,
+                '10': 10 * 60 * 1000,
+                '5': 5 * 60 * 1000,
+                '1': 60 * 1000
+            };
+            return map[currentInterval] || 3600 * 1000;
         }
 
-        // 判断是否到达播报时间
-        function shouldPlayNow() {
+        // ---- 判断是否应该播报 ----
+        function shouldPlay() {
             const now = Date.now();
-            // 距离上次播报时间不足间隔，直接跳过
-            if (now - lastPlayTime < getCurrentIntervalMs()) {
+            if (now - lastPlayTime < getIntervalMs()) {
                 return false;
             }
-            const date = new Date();
-            const minutes = date.getMinutes();
-            const seconds = date.getSeconds();
+            const d = new Date();
+            const min = d.getMinutes();
+            const sec = d.getSeconds();
 
-            switch(currentInterval) {
-                case 'hour': // 整点：分钟0，秒0
-                    return minutes === 0 && seconds === 0;
-                case '30': // 半点/整点：分钟0或30，秒0
-                    return (minutes === 0 || minutes === 30) && seconds === 0;
-                case '10': // 每10分钟：分钟为0/10/20/30/40/50，秒0
-                    return minutes % 10 === 0 && seconds === 0;
-                case '5': // 每5分钟：分钟%5===0，秒0
-                    return minutes % 5 === 0 && seconds === 0;
-                case '1': // 每1分钟：秒0
-                    return seconds === 0;
-                case 'custom': // 自定义间隔仅通过时间差判断
+            switch (currentInterval) {
+                case 'hour':
+                    return min === 0 && sec === 0;
+                case '30':
+                    return (min === 0 || min === 30) && sec === 0;
+                case '10':
+                    return min % 10 === 0 && sec === 0;
+                case '5':
+                    return min % 5 === 0 && sec === 0;
+                case '1':
+                    return sec === 0;
+                case 'custom':
                     return true;
                 default:
-                    return minutes === 0 && seconds === 0;
+                    return min === 0 && sec === 0;
             }
         }
 
-        // 执行语音播报
-        function speakAtCurrentTime() {
+        // ---- 执行语音播报 ----
+        function speakNow() {
             try {
                 const now = new Date();
-                const hours = now.getHours().toString().padStart(2, '0');
-                const minutes = now.getMinutes().toString().padStart(2, '0');
-                const text = `当前时间 ${hours} 点 ${minutes} 分`;
-                document.getElementById('audio-text').textContent = text;
+                const h = now.getHours().toString().padStart(2, '0');
+                const m = now.getMinutes().toString().padStart(2, '0');
+                const text = `当前时间 ${h} 点 ${m} 分`;
+                audioTextEl.textContent = text;
 
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'zh-CN'; // 设置中文语音
-                utterance.rate = 1;       // 语速
-                utterance.pitch = 1;      // 音高
-                utterance.volume = 1;     // 音量
-                utterance.onerror = (err) => console.warn('语音播放失败:', err.message);
-                speechSynthesis.speak(utterance);
+                const utt = new SpeechSynthesisUtterance(text);
+                utt.lang = 'zh-CN';
+                utt.rate = 1.0;
+                utt.pitch = 1.0;
+                utt.volume = 1.0;
+                utt.onerror = (e) => console.warn('语音失败:', e.message);
+                speechSynthesis.speak(utt);
+
+                lastPlayTime = Date.now();
             } catch (err) {
-                console.warn('操作异常:', err.message);
+                console.warn('播报异常:', err.message);
             }
         }
 
-        // 检查并触发播报
+        // ---- 检查并触发播报 ----
         function checkAndPlay() {
-            if (!userInteracted || !isManualPlayed) {
-                return;
-            }
-            // 非自定义间隔需要校验时间点
-            if (currentInterval !== 'custom' && !shouldPlayNow()) {
-                return;
-            }
-            speakAtCurrentTime();
-            lastPlayTime = Date.now();
+            if (!userInteracted || !isManualPlayed) return;
+
+            if (currentInterval !== 'custom' && !shouldPlay()) return;
+
+            speakNow();
         }
 
-        // 页面初始化
-        function init() {
-            // 手动激活按钮事件
-            document.getElementById('play-button').addEventListener('click', () => {
-                speakAtCurrentTime();
-                isManualPlayed = true;
-                userInteracted = true;
-                document.getElementById('play-button').textContent = "已激活权限";
-                document.getElementById('play-button').disabled = true;
-            });
+        // ---- 主循环（递归 setTimeout，精确对齐秒） ----
+        function mainLoop() {
+            updateCurrentTime();
+            checkAndPlay();
 
-            // 预设间隔按钮绑定
-            document.querySelectorAll('.interval-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    // 移除所有激活样式
-                    document.querySelectorAll('.interval-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    
-                    const interval = btn.dataset.interval;
-                    currentInterval = interval;
-                    customInterval = null;
-                    let intervalText = interval === 'hour' ? '整点' : `${interval}分钟`;
-                    document.getElementById('current-interval-text').textContent = intervalText;
-                    document.getElementById('custom-interval-input').value = '';
-                });
-            });
+            const next = 1000 - (Date.now() % 1000);
+            setTimeout(mainLoop, next);
+        }
 
-            // 自定义间隔提交绑定
-            document.getElementById('custom-submit').addEventListener('click', () => {
-                const inputVal = document.getElementById('custom-interval-input').value.trim();
-                const seconds = parseInt(inputVal);
-                if (!isNaN(seconds) && seconds > 0) {
-                    // 移除所有激活样式
-                    document.querySelectorAll('.interval-btn').forEach(b => b.classList.remove('active'));
-                    currentInterval = 'custom';
-                    customInterval = seconds;
-                    document.getElementById('current-interval-text').textContent = `自定义${seconds}秒`;
-                    document.getElementById('custom-interval-input').value = '';
-                } else {
-                    alert("请输入有效的正整数秒数！");
-                }
-            });
+        // ---- 激活权限（用户点击） ----
+        function onActivate() {
+            // 1) 先播报一次，验证权限
+            try {
+                const now = new Date();
+                const h = now.getHours().toString().padStart(2, '0');
+                const m = now.getMinutes().toString().padStart(2, '0');
+                const testText = `当前时间 ${h} 点 ${m} 分`;
+                audioTextEl.textContent = testText;
+                const utt = new SpeechSynthesisUtterance(testText);
+                utt.lang = 'zh-CN';
+                utt.rate = 1.0;
+                utt.pitch = 1.0;
+                utt.volume = 1.0;
+                speechSynthesis.speak(utt);
+                lastPlayTime = Date.now();
+            } catch (e) { /* ignore */ }
 
-            // 使用递归动态延迟定时器，避免浏览器后台节流
-            function runTimedTasks() {
+            isManualPlayed = true;
+            userInteracted = true;
+
+            // 2) 激活保活视频（如果尚未激活）
+            if (window.__keepaliveActivate) {
+                window.__keepaliveActivate();
+            }
+
+            // 3) 更新按钮状态
+            playBtn.textContent = ' 已激活权限 · 自动播报中';
+            playBtn.disabled = true;
+        }
+
+        // ---- 切换间隔 ----
+        function setIntervalType(type, labelText) {
+            currentInterval = type;
+            customInterval = null;
+            intervalTextEl.textContent = labelText;
+            customInput.value = '';
+            // 更新按钮高亮
+            intervalBtns.forEach(b => b.classList.remove('active'));
+            const match = Array.from(intervalBtns).find(b => b.dataset.interval === type);
+            if (match) match.classList.add('active');
+        }
+
+        // ---- 绑定事件 ----
+        playBtn.addEventListener('click', onActivate);
+
+        intervalBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.dataset.interval;
+                const label = val === 'hour' ? '整点' : `${val}分钟`;
+                setIntervalType(val, label);
+            });
+        });
+
+        customSubmit.addEventListener('click', () => {
+            const raw = customInput.value.trim();
+            const sec = parseInt(raw, 10);
+            if (isNaN(sec) || sec < 1) {
+                alert('请输入有效的正整数秒数');
+                return;
+            }
+            // 移除预设高亮
+            intervalBtns.forEach(b => b.classList.remove('active'));
+            currentInterval = 'custom';
+            customInterval = sec;
+            intervalTextEl.textContent = `自定义 ${sec} 秒`;
+            customInput.value = '';
+        });
+
+        // 回车提交自定义
+        customInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') customSubmit.click();
+        });
+
+        // ---- 启动 ----
+        mainLoop();
+
+        // ---- 页面可见性变化时刷新 ----
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
                 updateCurrentTime();
-                checkAndPlay();
-                // 计算精确的下一次执行时间，保证每秒触发一次
-                const nextTick = 1000 - (Date.now() % 1000);
-                setTimeout(runTimedTasks, nextTick);
             }
-            runTimedTasks();
-        }
+        });
 
-        window.addEventListener('load', init);
-    </script>
+        // console.log('[播报] 引擎已加载');
+    })();
+</script>
+
 </body>
 </html>
